@@ -67,9 +67,11 @@
     ;))
 
 
-(defn parse-csv [file-content]
-  (let [s file-content]
-    (println s)))
+(defn parse-csv [data, h-map]
+  (let [lines (rest (s/split data #"\n"))
+        header-lst (header-order-lst h-map)
+        rows-cols (map #(s/split % #"\t") lines)]
+    (println (map #(zipmap header-lst %) rows-cols))))
 
 
 (defn -main []
@@ -80,7 +82,7 @@
   ;(println (macroexpand '(<<< .readFile fs csv-filename)))
   ;(m/foobar); test a standalone module
 
-  (go (parse-csv (<! (open-file csv-filename))))
+  (go (parse-csv (<! (open-file csv-filename)) header-map))
   ;(println (parse-file-handler (parse-file csv-filename)))
   )
 
