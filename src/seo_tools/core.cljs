@@ -5,7 +5,7 @@
   (:require [cljs.nodejs :as nodejs]
             [clojure.string :as s]
             [seo-tools.modules :as m]
-            [cljs.core.async :refer [put! chan <! close!]] ))
+            [cljs.core.async :refer [put! chan <! close! take!]] ))
 
 (nodejs/enable-util-print!)
 (def fs (nodejs/require "fs"))
@@ -53,7 +53,7 @@
       ;(put! cb-chan (map #(zipmap header-lst %) rows-cols)) )))
 
 
-(defn parse-file [filename]
+(defn open-file[filename]
   (<<< .readFile fs filename))
 
 ;(defn parse-file [filename]
@@ -67,6 +67,11 @@
     ;))
 
 
+(defn parse-csv [file-content]
+  (let [s file-content]
+    (println s)))
+
+
 (defn -main []
   ;(parse-file csv-filename)
   ;(println (postfix-notation (1 1 +)))
@@ -74,7 +79,9 @@
   ;(parse-file csv-filename)
   ;(println (macroexpand '(<<< .readFile fs csv-filename)))
   ;(m/foobar); test a standalone module
-  (parse-file csv-filename)
+
+  (go (parse-csv (<! (open-file csv-filename))))
+  ;(println (parse-file-handler (parse-file csv-filename)))
   )
 
 (set! *main-cli-fn* -main)
