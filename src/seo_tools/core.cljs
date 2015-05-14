@@ -20,16 +20,6 @@
 
 (def csv-filename "/Users/bdcoe/Documents/workspace/seo-tools/chinese_vocab_builder.csv")
 
-(def test-data
-  [
-   {:foo 1 :bar 200}
-   {:foo 10 :bar 2}
-   {:foo 1 :bar 20}
-   {:foo 100 :bar 2}
-   ]
-  )
-
-
 (defn header-order-lst [m]
   (vec (for [[header-key, index] m] header-key)))
 
@@ -52,7 +42,12 @@
     (filter #(->> % :keyword (re-find filter-regex) nil? not) rows-cols))
 
 (defn parse-col [convert-func col-key rows-cols]
-  (map #(assoc % col-key (convert-func (col-key %))) rows-cols))
+  (map #(assoc % col-key
+               (if (and (not (undefined? %))
+                          (> (.-length %) 0 ))
+                   (convert-func (col-key %))
+                   (col-key %)
+                 )) rows-cols))
 
 
 (defn parse-csv [h-map, data]
@@ -62,8 +57,9 @@
         rows-cols (map #(zipmap header-lst %) rows-cols-raw) ]
     (->> rows-cols
          (parse-col js/parseInt :avg_monthly_searches)
-         (parse-col js/parseFloat :competition))
-
+         (parse-col js/parseFloat :competition)
+         (parse-col js/parseFloat :suggested_bid)
+         )
     )
 )
 
