@@ -34,8 +34,7 @@
   (vec (for [[header-key, index] m] header-key)))
 
 (defn open-file[filename]
-  (<<< .readFile fs filename "utf8")
-  )
+  (<<< .readFile fs filename "utf8"))
 
 (defn sort-by-col-helper [order col-label rows-cols]
   ; order can be either :ascending or :descending
