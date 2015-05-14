@@ -18,8 +18,17 @@
    :competition  4
    :suggested_bid  5 })
 
-;(def csv-filename "/Users/bdcoe/Documents/workspace/seo-tools/chinese_vocab_builder.csv")
-(def csv-filename "/Users/bdcoe/Documents/workspace/seo-tools/test.csv")
+(def csv-filename "/Users/bdcoe/Documents/workspace/seo-tools/chinese_vocab_builder.csv")
+
+(def test-data
+  [
+   {:foo 1 :bar 200}
+   {:foo 10 :bar 2}
+   {:foo 1 :bar 20}
+   {:foo 100 :bar 2}
+   ]
+  )
+
 
 (defn header-order-lst [m]
   (vec (for [[header-key, index] m] header-key)))
@@ -55,92 +64,67 @@
 
 
 (defn open-file[filename]
-  ;(<<< .readFile fs  "utf-8 " filename)
   (<<< .readFile fs filename "utf8")
   )
 
-;(defn parse-file [filename]
-  ;(let [cb-chan (chan)]
-    ;(.readFile fs
-               ;filename
-               ;(parse-file-cb cb-chan))
-    ;(go (loop []
-          ;(let [content (<! cb-chan)]
-            ;(println content))))
-    ;))
 
-;(defn big-to-little-endian [data-s]
-  ;(let [m (map-indexed vector data-s)
-        ;even-m (map second (filter #(-> % first even?) m))
-        ;odd-m (map second (filter #(-> % first odd?) m))]
+(defn sort-by-col-helper [order col-label rows-cols]
+  ; order can be either :ascending or :descending
+  (cond (= order :ascending) (sort-by col-label #(compare %1 %2) rows-cols)
+        (= order :descending) (sort-by col-label #(compare %2 %1) rows-cols)
+        :else (throw js/Error "The sorting order can only be :ascending or :descending")))
 
-    ;(do (println "wtf>>")
-        ;(println m)
-        ;(s/join (flatten (map list odd-m even-ms))))
-    ;)
-  ;)
+(defn sort-by-col-ascending [col-label rows-cols]
+  (sort-by-col-helper :ascending col-label rows-cols))
+
+(defn sort-by-col-descending [col-label rows-cols]
+  (sort-by-col-helper :descending col-label rows-cols))
+
+(defn keyword-filter [filter-regex rows-cols ]
+    (filter #(->> % :keyword (re-find filter-regex) nil? not) rows-cols))
+
+(defn parse-col [convert-func col-key rows-cols]
+  (map #(assoc % col-key (convert-func (col-key %))) rows-cols))
 
 
-(defn parse-csv [data, h-map, filter-regex]
+(defn parse-csv [data, h-map]
   (let [lines (rest (s/split data #"\n"))
         header-lst (header-order-lst h-map)
         rows-cols-raw (map #(s/split % #"\t") lines)
         rows-cols (map #(zipmap header-lst %) rows-cols-raw) ]
+    (->> rows-cols
+         (parse-col js/parseInt :avg_monthly_searches)
+         (parse-col js/parseFloat :competition))
 
-    ;(println (re-find #"(?i)chinese" (:keyword {:keyword "Chinese foo"})))
-    ;(println (type data))
-
-
-    ;(println (= "Vocab" (s/join (map second (filter #(odd? (first %)) (map-indexed vector (nth (nth rows-cols-raw 0) 0) ))) )))
-    ;(pr-str (s/split "Vocab" ""))
-
-
-
-    ;(loop [i 0]
-      ;(if (< i  (count rows-cols))
-        ;(do
-          ;;(println (= "vocab builders" (str "" (:keyword (nth rows-cols i)))))
-          ;(println (:keyword (nth rows-cols i)))
-          ;(println (nth (s/split (:keyword (nth rows-cols i)) "") 1))
-
-          ;(recur (inc i)))
-        ;)
-      ;)
-
-    ;(println (:keyword (nth rows-cols 2)))
-    ;(println (#(:keyword %) (nth rows-cols 0)))
-
-    ;(println (filter #(and (-> % :keyword string?)
-                           ;) rows-cols))
-
-    (println (filter #(->> % :keyword (re-find filter-regex) nil? not) rows-cols))
-    ;(println rows-cols)
-
-    ;(println (filter #(nil? (re-find filter-regex  (:ad_group %))) rows-cols))
     )
 )
 
+(defn pprint [rows-cols]
+  (let [cnt (count rows-cols)]
+    (loop [i 0]
+      (when (< i cnt)
+        (do
+          (println (nth rows-cols i))
+          (recur (inc i)))
+        )
+      )
+    )
+  )
+
 
 (defn -main []
-  ;(parse-file csv-filename)
-  ;(println (postfix-notation (1 1 +)))
-  ;(<<< conj '[] 1)
-  ;(parse-file csv-filename)
-  ;(println (macroexpand '(<<< .readFile fs csv-filename)))
-  ;(m/foobar); test a standalone module
-
-  (go (parse-csv
-        (<! (open-file csv-filename))
-        header-map
-        #"(?i)chinese"))
-
-  ;(.readFile fs csv-filename "utf16le"
-             ;(fn [e, d]
-               ;(do
-                 ;(println (type d))
-                 ;(println d)
-                 ;(println (map-indexed vector d)))
-               ;))
+  (go
+    (pprint
+     (sort-by-col-descending
+      :avg_monthly_searches
+      (keyword-filter
+        #"(?i)chinese"
+        (parse-csv
+          (<! (open-file csv-filename))
+          header-map)
+        )
+      ))
+    )
   )
 
 
