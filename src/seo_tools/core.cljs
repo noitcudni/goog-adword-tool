@@ -87,7 +87,7 @@
   (map #(assoc % col-key (convert-func (col-key %))) rows-cols))
 
 
-(defn parse-csv [data, h-map]
+(defn parse-csv [h-map, data]
   (let [lines (rest (s/split data #"\n"))
         header-lst (header-order-lst h-map)
         rows-cols-raw (map #(s/split % #"\t") lines)
@@ -114,16 +114,12 @@
 
 (defn -main []
   (go
-    (pprint
-     (sort-by-col-descending
-      :avg_monthly_searches
-      (keyword-filter
-        #"(?i)chinese"
-        (parse-csv
-          (<! (open-file csv-filename))
-          header-map)
-        )
-      ))
+    (->> (<! (open-file csv-filename))
+         (parse-csv header-map)
+         (keyword-filter #"(?i)chinese")
+         (sort-by-col-descending :avg_monthly_searches)
+         pprint
+      )
     )
   )
 
