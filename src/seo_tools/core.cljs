@@ -33,40 +33,9 @@
 (defn header-order-lst [m]
   (vec (for [[header-key, index] m] header-key)))
 
-;(defn parse-file-cb [err, data]
-  ;(let [lines (rest (s/split data #"\n"))
-        ;header-lst (header-order-lst header-map)
-        ;rows-cols (map #(s/split % #"\t") lines)]
-    ;(println (map #(zipmap header-lst %) rows-cols))
-    ;))
-
-
-;(defmacro <<< [f & args]
-  ;`(f ~args))
-
-;(defn <<< [f & args]
-  ;(let [c (chan)]
-    ;;(println f)
-    ;;(apply f (concat args [(fn [e, x]
-                             ;;(if (or (nil? x)
-                                     ;;(undefined? x))
-                               ;;(close! c)
-                               ;;(put! c x)))]))
-    ;c))
-
-;(defn parse-file-cb [cb-chan]
-  ;; returns a function
-  ;(fn [err, data]
-    ;(let [lines (rest (s/split data #"\n"))
-          ;header-lst (header-order-lst header-map)
-          ;rows-cols (map #(s/split % #"\t") lines)]
-      ;(put! cb-chan (map #(zipmap header-lst %) rows-cols)) )))
-
-
 (defn open-file[filename]
   (<<< .readFile fs filename "utf8")
   )
-
 
 (defn sort-by-col-helper [order col-label rows-cols]
   ; order can be either :ascending or :descending
