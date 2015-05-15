@@ -1,6 +1,6 @@
 (ns seo-tools.core
   (:require-macros [cljs.core.async.macros :refer [go]]
-                   [seo-tools.macros :refer [postfix-notation <<<]]
+                   [seo-tools.macros :refer [<<<]]
                    )
   (:require [cljs.nodejs :as nodejs]
             [clojure.string :as s]
