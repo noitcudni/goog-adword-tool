@@ -43,11 +43,14 @@
 
 (defn parse-col [convert-func col-key rows-cols]
   (map #(assoc % col-key
-               (if (and (not (undefined? %))
-                          (> (.-length %) 0 ))
-                   (convert-func (col-key %))
-                   (col-key %)
-                 )) rows-cols))
+               (convert-func (col-key %)))
+               ;(if (and
+                     ;(not (undefined? %))
+                     ;(> (.-length %) 0 ))
+                   ;(convert-func (col-key %))
+                   ;(col-key %)
+                 ;))
+       rows-cols))
 
 
 (defn parse-csv [h-map, data]
@@ -55,6 +58,7 @@
         header-lst (header-order-lst h-map)
         rows-cols-raw (map #(s/split % #"\t") lines)
         rows-cols (map #(zipmap header-lst %) rows-cols-raw) ]
+
     (->> rows-cols
          (parse-col js/parseInt :avg_monthly_searches)
          (parse-col js/parseFloat :competition)
@@ -62,6 +66,19 @@
          )
     )
 )
+
+(defn range-filter [rows-cols col-key & {:keys [start end]}]
+  (let [has-start (-> start nil? not)
+        has-end (-> end nil? not) ]
+    ;(println (str "has-start " has-start))
+    ;(println (str "has-end " has-end))
+    (cond (and has-start has-end) (filter #(let [v (col-key %)] and (>= v start) (<= v end)) rows-cols)
+           has-start (filter #(let [v (col-key %)] (>= v start)) rows-cols)
+           has-end (filter #(let [v (col-key %)] (<= v end)) rows-cols)
+           :else (throw js/Error "must supply either :start or :end")
+           )
+    )
+  )
 
 (defn pprint [rows-cols]
   (let [cnt (count rows-cols)]
@@ -77,14 +94,56 @@
 
 
 (defn -main []
-  (go
-    (->> (<! (open-file csv-filename))
-         (parse-csv header-map)
-         (keyword-filter #"(?i)chinese")
-         (sort-by-col-descending :avg_monthly_searches)
-         pprint
-      )
-    )
+  ;(go
+    ;(->> (<! (open-file csv-filename))
+         ;(parse-csv header-map)
+         ;(keyword-filter #"(?i)chinese")
+         ;(sort-by-col-descending :avg_monthly_searches)
+         ;pprint
+      ;)
+    ;)
+
+  ;(go (println (count (->> (<! (open-file csv-filename)) (parse-csv header-map) (keyword-filter #"(?i)chinese") (sort-by-col-descending :avg_monthly_searches)))))
+  ;(go (pprint (range-filter (->> (<! (open-file csv-filename)) (parse-csv header-map) (keyword-filter #"(?i)chinese") (sort-by-col-descending :avg_monthly_searches)) :suggested_bid :end 1.0)))
+
+
+  ;(go
+    ;(pprint
+      ;(->>
+        ;(->
+          ;( ->> (<! (open-file csv-filename))
+                ;(parse-csv header-map)
+                ;(keyword-filter #"(?i)chinese")
+
+                ;)
+          ;(range-filter :suggested_bid :end 1.0)
+          ;)
+        ;(sort-by-col-descending :avg_monthly_searches)
+        ;)
+      ;)
+    ;)
+
+    (go (let [data (->> (<! (open-file csv-filename))
+                        (parse-csv header-map)
+                        (keyword-filter #"(?i)chinese")
+                        ;(sort-by-col-descending :avg_monthly_searches)
+                        )]
+          (pprint (sort-by-col-ascending
+                    :avg_monthly_searches
+                    (range-filter data :suggested_bid :end 1.0)))
+          )
+        )
+
+  ;(go (pprint
+        ;(->
+          ;(->> (<! (open-file csv-filename))
+               ;(parse-csv header-map)
+               ;(keyword-filter #"(?i)chinese")
+               ;(sort-by-col-descending :avg_monthly_searches))
+          ;(range-filter :suggested_bid :end 1.0)
+          ;)
+        ;)
+      ;)
   )
 
 

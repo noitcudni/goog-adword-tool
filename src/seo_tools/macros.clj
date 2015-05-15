@@ -1,9 +1,5 @@
 (ns seo-tools.macros)
 
-(defmacro postfix-notation
-  [expression]
-  (conj (butlast expression) (last expression)))
-
 (defmacro <<< [f & args]
   ; add callback
   `(let [c# (cljs.core.async/chan)]
